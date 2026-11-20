@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Проверка рисков 115-ФЗ и лимита НПД для самозанятых</title>
+<meta name="description" content="Калькулятор лимита 2,4 млн ₽ и риска блокировки карты по 115-ФЗ для самозанятых и ИП на НПД.">
+<style>
+:root{
+  --bg:#eef1f5; --card:#fff; --ink:#0f1b2d; --muted:#5b6b82; --line:#e1e6ee;
+  --blue:#1d4ed8; --blue-soft:#e8eefc;
+  --green:#0b9f6c; --green-dark:#087a53; --green-soft:#e3f6ee;
+  --amber-soft:#fdf3dc; --red:#d03a3a; --red-soft:#fde8e8;
+  --shadow:0 1px 2px rgba(15,27,45,.06),0 8px 24px rgba(15,27,45,.07);
+  --r:20px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 Inter,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+h1,h2,h3{line-height:1.15;margin:0;letter-spacing:-.02em}
+section{padding:36px 0}
+.hero{padding:64px 0 28px}
+.hero h1{font-size:clamp(28px,5.2vw,52px);font-weight:800;max-width:17em}
+.hero p{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:40em;margin:18px 0 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;font-size:14px;color:var(--muted)}
+h2{font-size:clamp(22px,3vw,30px);font-weight:750;margin-bottom:18px}
+
+/* calculator */
+.calc{display:grid;grid-template-columns:1.05fr 1fr;gap:20px;align-items:start}
+.card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:28px}
+.label{font-weight:650;font-size:15px;margin-bottom:10px;display:block}
+.income{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.income output{font-size:clamp(32px,5vw,44px);font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.income span{color:var(--muted);font-size:15px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:99px;background:linear-gradient(to right,var(--green) var(--p,0%),#dfe5ee var(--p,0%));outline:none;margin:14px 0 6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:#fff;border:3px solid var(--green);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid var(--green);box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer}
+input[type=range]:focus-visible{outline:3px solid var(--blue-soft);outline-offset:6px}
+.scale{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#eef1f5;border-radius:14px;padding:5px;margin-top:6px}
+.seg label{position:relative;cursor:pointer}
+.seg input{position:absolute;opacity:0;inset:0;cursor:pointer}
+.seg span{display:block;text-align:center;padding:12px 10px;border-radius:10px;font-weight:600;font-size:14px;color:var(--muted);transition:background .15s,color .15s}
+.seg input:checked+span{background:#fff;color:var(--blue);box-shadow:0 1px 4px rgba(15,27,45,.15)}
+.seg input:focus-visible+span{outline:3px solid var(--blue-soft)}
+.field{margin-bottom:26px}.field:last-child{margin-bottom:0}
+.hint{font-size:13px;color:var(--muted);margin-top:10px}
+.stat{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.stat small{color:var(--muted);font-size:14px;display:block}
+.stat strong{font-size:clamp(24px,4vw,34px);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.bar{position:relative;height:14px;border-radius:99px;background:#e3e8f0;margin:18px 0 6px;overflow:hidden}
+.bar i{position:absolute;inset:0 auto 0 0;width:0;border-radius:99px;background:var(--green);transition:width .25s ease,background .25s}
+.barlabels{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+.badge{display:flex;gap:12px;align-items:flex-start;border-radius:14px;padding:14px 16px;margin-top:16px;font-size:14.5px}
+.badge b{display:block;font-size:15px;margin-bottom:2px}
+.badge .dot{flex:none;width:12px;height:12px;border-radius:50%;margin-top:6px}
+.ok{background:var(--green-soft)}.ok .dot{background:var(--green)}
+.warn{background:var(--amber-soft)}.warn .dot{background:#e0a21b}
+.bad{background:var(--red-soft)}.bad .dot{background:var(--red)}
+.risk-title{font-size:13px;color:var(--muted);margin-top:22px;font-weight:600}
+.tips{margin:14px 0 0;padding-left:18px;color:var(--muted);font-size:14px}
+.tips li{margin-bottom:4px}
+.taxline{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);margin-top:18px;padding-top:14px;font-size:14px;color:var(--muted)}
+.taxline b{color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.inline{border-top:1px solid var(--line);margin-top:22px;padding-top:20px}
+.inline h3{font-size:18px;margin-bottom:4px}
+.inline>p{margin:0 0 14px;font-size:14px;color:var(--muted)}
+
+/* banks */
+.banks{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.bank{display:flex;flex-direction:column;padding:24px}
+.bank header{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;flex:none}
+.bank h3{font-size:20px}
+.bank .sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.bank ul{list-style:none;padding:0;margin:0 0 20px;flex:1}
+.bank li{position:relative;padding:8px 0 8px 28px;border-top:1px solid var(--line);font-size:15px}
+.bank li::before{content:"";position:absolute;left:2px;top:13px;width:14px;height:8px;border-left:2.5px solid var(--green);border-bottom:2.5px solid var(--green);transform:rotate(-45deg) scale(.85)}
+.btn{display:block;width:100%;text-align:center;text-decoration:none;background:var(--green);color:#fff;font:inherit;font-weight:700;font-size:16px;padding:15px 18px;border:0;border-radius:14px;box-shadow:0 6px 16px rgba(11,159,108,.35);cursor:pointer;transition:background .15s,transform .1s}
+.btn:hover{background:var(--green-dark)}
+.btn:active{transform:translateY(1px)}
+.btn:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+.btn[disabled]{opacity:.65;cursor:wait}
+.btn.alt{background:var(--blue);box-shadow:0 6px 16px rgba(29,78,216,.3)}
+.btn.alt:hover{background:#173fb0}
+.note{font-size:13px;color:var(--muted);margin-top:16px}
+
+/* faq */
+.faq{display:grid;gap:12px}
+details{background:var(--card);border-radius:16px;box-shadow:var(--shadow);padding:0 22px}
+summary{cursor:pointer;list-style:none;padding:18px 28px 18px 0;font-weight:650;font-size:17px;position:relative}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";position:absolute;right:0;top:50%;transform:translateY(-50%);font-size:26px;font-weight:400;color:var(--blue);transition:transform .2s}
+details[open] summary::after{transform:translateY(-50%) rotate(45deg)}
+summary:focus-visible{outline:3px solid var(--blue-soft);border-radius:8px}
+details p{margin:0 0 18px;color:var(--muted)}
+details p+p{margin-top:-6px}
+footer{padding:28px 0 56px;font-size:13px;color:var(--muted)}
+
+/* lead form */
+.fl{display:block;font-weight:650;font-size:14px;margin:0 0 6px}
+.lead select,.lead input[type=text]{width:100%;font:inherit;font-size:16px;color:var(--ink);background:#f6f8fb;border:1.5px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:14px;outline:none;transition:border-color .15s,background .15s}
+.lead select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,#5b6b82 50%),linear-gradient(135deg,#5b6b82 50%,transparent 50%);background-position:calc(100% - 20px) 52%,calc(100% - 14px) 52%;background-size:6px 6px;background-repeat:no-repeat;padding-right:40px}
+.lead select:focus,.lead input[type=text]:focus{border-color:var(--blue);background:#fff}
+.lead .invalid{border-color:var(--red)}
+.chk{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--muted);margin:2px 0 14px;cursor:pointer}
+.chk input{flex:none;width:20px;height:20px;margin:1px 0 0;accent-color:var(--green)}
+.lnk{background:none;border:0;padding:0;font:inherit;color:var(--blue);text-decoration:underline;cursor:pointer}
+.err{color:var(--red);font-size:13.5px;min-height:0;margin:-6px 0 10px}
+.err:empty{display:none}
+.tglink{display:block;text-align:center;margin-top:14px;font-weight:650;font-size:15px;color:var(--blue);text-decoration:none;padding:6px}
+.tglink:hover{text-decoration:underline}
+.done{text-align:center;padding:6px 0}
+.done .ico{width:56px;height:56px;border-radius:50%;margin:0 auto 14px;display:grid;place-items:center;font-size:28px;font-weight:800;color:#fff;background:var(--green)}
+.done.fail .ico{background:#e0a21b}
+.done h3{font-size:20px;margin-bottom:8px}
+.done p{color:var(--muted);margin:0 0 18px;font-size:15px}
+
+/* modal */
+.ov{position:fixed;inset:0;background:rgba(15,27,45,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:100;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.ov.open{display:flex}
+#policyOv{z-index:110}
+.modal{background:#fff;border-radius:22px;max-width:440px;width:100%;padding:26px 24px 24px;position:relative;box-shadow:0 20px 60px rgba(15,27,45,.35);max-height:92vh;overflow-y:auto}
+.modal h3{font-size:22px;margin:0 28px 6px 0}
+.modal .lead-sub{color:var(--muted);font-size:14.5px;margin:0 0 18px}
+.x{position:absolute;top:12px;right:12px;width:40px;height:40px;border:0;border-radius:50%;background:#eef1f5;color:var(--ink);font-size:22px;line-height:1;cursor:pointer}
+.x:hover{background:#e1e6ee}
+.x:focus-visible{outline:3px solid var(--blue)}
+.policy{font-size:14px;color:var(--muted)}
+.policy h4{margin:14px 0 4px;color:var(--ink);font-size:15px}
+.policy p{margin:0 0 6px}
+
+@media (max-width:980px){.banks{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:860px){.calc{grid-template-columns:1fr}.hero{padding-top:40px}.card{padding:22px}}
+@media (max-width:600px){
+  .banks{grid-template-columns:1fr}
+  .wrap{padding:0 16px}
+  .ov{align-items:flex-end;padding:0}
+  .modal{border-radius:22px 22px 0 0;max-width:none;max-height:94vh;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <h1>Проверка рисков 115-ФЗ и лимита НПД для самозанятых</h1>
+    <p>Как безопасно принимать оплату от физлиц и юрлиц в 2026 году: посчитайте годовой доход, проверьте запас до лимита 2,4 млн ₽ и оцените шанс, что банк заблокирует обычную карту.</p>
+    <div class="chips">
+      <span class="chip">Лимит НПД: 2 400 000 ₽ в год</span>
+      <span class="chip">Ставка 4% с физлиц</span>
+      <span class="chip">Ставка 6% с юрлиц и ИП</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section aria-labelledby="calc-title">
+    <h2 id="calc-title">Калькулятор лимита и рисков</h2>
+    <div class="calc">
+      <div class="card">
+        <div class="field">
+          <label class="label" for="income">Ежемесячный доход</label>
+          <div class="income"><output id="incomeOut" for="income">100 000</output><span>₽ в месяц</span></div>
+          <input type="range" id="income" min="20000" max="400000" step="5000" value="100000">
+          <div class="scale"><span>20 000 ₽</span><span>400 000 ₽</span></div>
+        </div>
+        <div class="field">
+          <span class="label" id="typeLabel">Кто платит вам</span>
+          <div class="seg" role="radiogroup" aria-labelledby="typeLabel">
+            <label><input type="radio" name="client" value="phys" checked><span>Физлица (переводы на карту)</span></label>
+            <label><input type="radio" name="client" value="legal"><span>Юрлица и ИП (оплата по договору)</span></label>
+          </div>
+          <p class="hint">Расчёт ориентировочный: он показывает, на что обычно смотрят банки, а не гарантирует решение конкретного банка.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div aria-live="polite">
+          <div class="stat">
+            <div><small>Доход за год</small><strong id="yearOut">1 200 000 ₽</strong></div>
+            <div style="text-align:right"><small>Использовано от лимита</small><strong id="pctOut">50%</strong></div>
+          </div>
+          <div class="bar" role="progressbar" aria-label="Использование лимита НПД" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><i id="barFill"></i></div>
+          <div class="barlabels"><span>0 ₽</span><span>Лимит 2,4 млн ₽</span></div>
+          <div id="limitBadge" class="badge ok"><span class="dot"></span><div><b id="limitTitle"></b><span id="limitText"></span></div></div>
+          <div class="risk-title">Риск блокировки обычной карты по 115-ФЗ</div>
+          <div id="riskBadge" class="badge ok"><span class="dot"></span><div><b id="riskTitle"></b><span id="riskText"></span></div></div>
+          <ul class="tips" id="tips"></ul>
+          <div class="taxline"><span id="taxLabel">Налог за год</span><b id="taxOut"></b></div>
+        </div>
+        <div class="inline">
+          <h3>Получить персональную ссылку</h3>
+          <p>Выберите банк и оставьте контакт. Расчёт из калькулятора передадим вместе с заявкой.</p>
+          <div id="inlineForm"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="banks-title">
+    <h2 id="banks-title">Счёт и регистрация ИП: выберите банк под задачу</h2>
+    <div class="banks" id="banks"></div>
+    <p class="note">Реклама. Сайт может получать вознаграждение от банков-партнёров. Условия и тарифы зависят от банка и могут меняться, перед открытием счёта проверьте их на сайте банка.</p>
+  </section>
+
+  <section aria-labelledby="faq-title">
+    <h2 id="faq-title">Частые вопросы</h2>
+    <div class="faq">
+      <details>
+        <summary>Сохранится ли статус самозанятого при открытии ИП на НПД?</summary>
+        <p>Да, налоговый режим НПД можно применять и в статусе ИП. Но это один режим на оба статуса: лимит 2,4 млн ₽ в год считается общий, и действуют те же ограничения (нельзя нанимать сотрудников по трудовым договорам и перепродавать товары).</p>
+        <p>Если доход за год превысит лимит, право на НПД теряется, и ИП переходит на другой режим, например УСН. Порядок перехода и сроки проверьте в «Мой налог» или в ФНС.</p>
+      </details>
+      <details>
+        <summary>Нужно ли платить страховые взносы?</summary>
+        <p>Обязательных страховых взносов на НПД нет: ни у самозанятых, ни у ИП на НПД. Налог платите только с полученных доходов.</p>
+        <p>Но пенсионный стаж за эти периоды не копится. Если он вам важен, можно добровольно платить взносы в СФР.</p>
+      </details>
+      <details>
+        <summary>Как выставлять счета ООО?</summary>
+        <p>Заключите договор, выставьте счёт или акт с реквизитами ООО и получите оплату на расчётный счёт или карту. Затем сформируйте чек в «Мой налог», указав ИНН и название организации.</p>
+        <p>Чек юрлицу нужно передать не позже 9-го числа месяца, следующего за месяцем оплаты. Эти поступления облагаются по ставке 6%, а понятное назначение платежа и договор помогают снять вопросы у банка.</p>
+      </details>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">Расчёты носят справочный характер и не являются налоговой, юридической или финансовой консультацией. Актуальные правила уточняйте в ФНС и в вашем банке.
+  <br><button type="button" class="lnk" data-policy>Политика конфиденциальности</button></div>
+</footer>
+
+<!-- Модальное окно заявки -->
+<div class="ov" id="leadOv" role="dialog" aria-modal="true" aria-labelledby="leadTitle">
+  <div class="modal">
+    <button class="x" type="button" data-close aria-label="Закрыть">&times;</button>
+    <h3 id="leadTitle">Получить персональную ссылку</h3>
+    <p class="lead-sub">Выберите банк и оставьте контакт. Мы отправим ссылку на открытие счёта.</p>
+    <div id="modalForm"></div>
+  </div>
+</div>
+
+<!-- Модальное окно политики -->
+<div class="ov" id="policyOv" role="dialog" aria-modal="true" aria-labelledby="policyTitle">
+  <div class="modal">
+    <button class="x" type="button" data-close aria-label="Закрыть">&times;</button>
+    <h3 id="policyTitle">Политика конфиденциальности</h3>
+    <div class="policy">
+      <h4>Какие данные мы собираем</h4>
+      <p>Только те, что вы указываете в форме: выбранный банк, ваш @username в Telegram или номер телефона, а также параметры калькулятора (доход, тип клиентов, результат расчёта).</p>
+      <h4>Зачем</h4>
+      <p>Чтобы связаться с вами и отправить персональную ссылку на открытие счёта или регистрацию ИП в выбранном банке.</p>
+      <h4>Как используем и храним</h4>
+      <p>Заявка передаётся владельцу сайта через Telegram. Мы не публикуем ваши данные и не используем их для других целей. Данные хранятся не дольше, чем нужно для обработки заявки.</p>
+      <h4>Передача третьим лицам</h4>
+      <p>Данные не продаются. Для открытия счёта вы сами передаёте свои данные выбранному банку на его сайте, это регулируется политикой банка.</p>
+      <h4>Ваши права</h4>
+      <p>Вы можете в любой момент отозвать согласие и попросить удалить ваши данные, написав нам в Telegram.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====== НАСТРОЙКИ: вставьте свои данные ====== */
+// Токен вашего Telegram-бота от @BotFather (вид: 123456:ABC-DEF...)
+const TG_BOT_TOKEN = "ВСТАВИТЬ_ТОКЕН_БОТА";
+// ID чата (или канала), куда бот будет присылать заявки
+const TG_CHAT_ID = "ВСТАВИТЬ_CHAT_ID";
+// Ваш ник в Telegram БЕЗ собачки (для кнопки «Написать сразу в Telegram»)
+const YOUR_TG_USERNAME = "ВСТАВИТЬ_НИК_БЕЗ_СОБАЧКИ";
+/* ============================================ */
+
+(function(){
+  var BANKS=[
+    {name:'Т-Банк',letter:'Т',bg:'#f5c400',fg:'#222',sub:'Для тех, кто открывает ИП онлайн',
+     pros:['Регистрация ИП онлайн без госпошлины','Выезд представителя для оформления','Счёт и приём платежей в одном приложении']},
+    {name:'Точка Банк',letter:'Т',bg:'#6f3ff5',fg:'#fff',sub:'Для тех, кого беспокоят блокировки',
+     pros:['Помощь с вопросами по 115-ФЗ','Регистрация ИП и ООО без визита в банк','Онлайн-бухгалтерия для ИП']},
+    {name:'Альфа-Банк',letter:'А',bg:'#ef3124',fg:'#fff',sub:'Для самозанятых и новых ИП',
+     pros:['Регистрация бизнеса без ФНС, МФЦ и визита в офис','Подключение самозанятости: чеки и расходы в одном месте','Бесплатное открытие счёта']},
+    {name:'ВТБ',letter:'В',bg:'#0a5dc2',fg:'#fff',sub:'Для тех, кому важна широкая сеть офисов',
+     pros:['Помощь с регистрацией бизнеса','Расчётный счёт на выгодных условиях','Офисы и банкоматы по всей стране']},
+    {name:'Сбер',letter:'С',bg:'#21a038',fg:'#fff',sub:'Для тех, кому привычен Сбер',
+     pros:['Открытие счёта без визита в офис','Бесплатное открытие счёта','Знакомый интерфейс и привычные переводы']},
+    {name:'Озон Банк',letter:'О',bg:'#005bff',fg:'#fff',sub:'Для селлеров маркетплейсов',
+     pros:['Выгодно для продавцов на маркетплейсах','Регистрация бизнеса онлайн','Счёт для ИП и ООО']}
+  ];
+
+  var $=function(id){return document.getElementById(id)};
+  var fmt=function(n){return Math.round(n).toLocaleString('ru-RU').replace(/\u00a0/g,' ')};
+  var MIN=20000, MAX=400000, LIMIT=2400000;
+  var S={m:100000,year:1200000,pct:50,type:'phys',limit:'',risk:''}; // текущие значения калькулятора
+
+  /* ---------- карточки банков ---------- */
+  $('banks').innerHTML=BANKS.map(function(b){
+    return '<article class="card bank"><header><div class="logo" style="background:'+b.bg+';color:'+b.fg+'">'+b.letter+'</div><h3>'+b.name+'</h3></header>'+
+      '<p class="sub">'+b.sub+'</p><ul>'+b.pros.map(function(p){return '<li>'+p+'</li>'}).join('')+'</ul>'+
+      '<button class="btn" type="button" data-bank="'+b.name+'">Открыть счёт / Получить ссылку</button></article>';
+  }).join('');
+
+  /* ---------- сообщения ---------- */
+  function clientsText(){return S.type==='phys'?'физлица (переводы на карту)':'юрлица и ИП (оплата по договору)'}
+  function calcLines(){
+    return ['Доход: '+fmt(S.m)+' ₽ в месяц','За год: '+fmt(S.year)+' ₽ ('+Math.round(S.pct)+'% от лимита 2,4 млн ₽)',
+      'Клиенты: '+clientsText(),'Лимит НПД: '+S.limit,'Риск по 115-ФЗ: '+S.risk];
+  }
+  function botText(bank,contact){
+    return ['Новая заявка с сайта','Банк: '+bank,'Контакт: '+contact,'','Данные калькулятора:'].concat(calcLines()).join('\n');
+  }
+  function tgText(bank){
+    return ['Здравствуйте! Хочу получить персональную ссылку на открытие счёта: '+bank+'.',''].concat(calcLines()).join('\n');
+  }
+  function tgLink(bank){return 'https://t.me/'+YOUR_TG_USERNAME+'?text='+encodeURIComponent(tgText(bank))}
+  function notConfigured(){return /ВСТАВИТЬ/.test(TG_BOT_TOKEN)||/ВСТАВИТЬ/.test(TG_CHAT_ID)}
+
+  /* ---------- форма заявки (общая для модального окна и калькулятора) ---------- */
+  var forms=[];
+  function mountForm(host,p){
+    var opts=BANKS.map(function(b){return '<option value="'+b.name+'">'+b.name+'</option>'}).join('');
+    host.innerHTML=
+      '<form class="lead" novalidate>'+
+        '<label class="fl" for="'+p+'-bank">Банк</label><select id="'+p+'-bank" name="bank">'+opts+'</select>'+
+        '<label class="fl" for="'+p+'-contact">Ваш @username в Telegram или номер телефона</label>'+
+        '<input type="text" id="'+p+'-contact" name="contact" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="@username или +7 900 000-00-00">'+
+        '<div class="err" role="alert"></div>'+
+        '<label class="chk"><input type="checkbox" name="agree"><span>Согласен(на) на обработку персональных данных. <button type="button" class="lnk" data-policy>Политика конфиденциальности</button></span></label>'+
+        '<button class="btn" type="submit">Получить персональную ссылку</button>'+
+        '<a class="tglink" href="#" target="_blank" rel="noopener">Или написать сразу в Telegram →</a>'+
+      '</form>'+
+      '<div class="done" hidden></div>';
+    var f=host.querySelector('form'), done=host.querySelector('.done');
+    var sel=f.bank, inp=f.contact, err=f.querySelector('.err'), link=f.querySelector('.tglink'), btn=f.querySelector('button.btn');
+
+    function refresh(){link.href=tgLink(sel.value)}
+    function setErr(msg,el){err.textContent=msg||'';inp.classList.toggle('invalid',el===inp)}
+    function showDone(ok){
+      done.className='done'+(ok?'':' fail');
+      done.innerHTML=ok
+        ?'<div class="ico">✓</div><h3>Заявка принята!</h3><p>Отправим персональную ссылку в ближайшее время.</p><a class="btn alt" target="_blank" rel="noopener" href="'+tgLink(sel.value)+'">Перейти в Telegram сейчас</a>'
+        :'<div class="ico">!</div><h3>Не удалось отправить заявку автоматически</h3><p>Напишите нам напрямую в Telegram: данные калькулятора и выбранный банк уже подставлены в сообщение.</p><a class="btn alt" target="_blank" rel="noopener" href="'+tgLink(sel.value)+'">Написать в Telegram</a>';
+      f.hidden=true; done.hidden=false;
+    }
+    function parse(v){
+      v=v.trim().replace(/^https?:\/\/t\.me\//i,'');
+      var u=v.replace(/^@/,'');
+      if(/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(u)) return '@'+u;
+      if(/^\+?\d{10,15}$/.test(v.replace(/[\s()\-]/g,''))) return v;
+      return null;
+    }
+    sel.addEventListener('change',refresh);
+    inp.addEventListener('input',function(){setErr('')});
+    link.addEventListener('click',refresh);
+
+    f.addEventListener('submit',function(e){
+      e.preventDefault();
+      var contact=parse(inp.value);
+      if(!inp.value.trim()){setErr('Укажите @username в Telegram или номер телефона.',inp);inp.focus();return}
+      if(!contact){setErr('Не похоже на @username или номер. Пример: @ivan_ivanov или +7 900 123-45-67.',inp);inp.focus();return}
+      if(!f.agree.checked){setErr('Поставьте галочку согласия на обработку данных.');return}
+      setErr('');
+      if(notConfigured()){showDone(false);return}
+      btn.disabled=true; var old=btn.textContent; btn.textContent='Отправляем…';
+      var ctl=new AbortController(), t=setTimeout(function(){ctl.abort()},10000);
+      fetch('https://api.telegram.org/bot'+TG_BOT_TOKEN+'/sendMessage',{
+        method:'POST',headers:{'Content-Type':'application/json'},signal:ctl.signal,
+        body:JSON.stringify({chat_id:TG_CHAT_ID,text:botText(sel.value,contact)})
+      }).then(function(r){return r.json()}).then(function(d){
+        clearTimeout(t);
+        if(d&&d.ok){showDone(true)}else{showDone(false)}
+      }).catch(function(){clearTimeout(t);showDone(false)})
+        .then(function(){btn.disabled=false;btn.textContent=old});
+    });
+
+    var api={
+      refresh:refresh,
+      setBank:function(n){sel.value=n;refresh()},
+      reset:function(){f.hidden=false;done.hidden=true;setErr('');btn.disabled=false},
+      focus:function(){inp.focus()}
+    };
+    refresh(); forms.push(api); return api;
+  }
+  var modalForm=mountForm($('modalForm'),'m');
+  var inlineForm=mountForm($('inlineForm'),'i');
+
+  /* ---------- модальные окна ---------- */
+  var openStack=[], lastFocus=null;
+  function lock(){document.body.style.overflow=openStack.length?'hidden':''}
+  function openOv(el){
+    if(!openStack.length) lastFocus=document.activeElement;
+    el.classList.add('open'); openStack.push(el); lock();
+  }
+  function closeOv(el){
+    el.classList.remove('open');
+    openStack=openStack.filter(function(x){return x!==el}); lock();
+    if(!openStack.length&&lastFocus&&lastFocus.focus) lastFocus.focus();
+  }
+  document.addEventListener('click',function(e){
+    var t=e.target;
+    var bankBtn=t.closest('[data-bank]');
+    if(bankBtn){
+      modalForm.reset(); modalForm.setBank(bankBtn.getAttribute('data-bank'));
+      openOv($('leadOv')); setTimeout(modalForm.focus,50); return;
+    }
+    if(t.closest('[data-policy]')){openOv($('policyOv'));return}
+    if(t.closest('[data-close]')){closeOv(t.closest('.ov'));return}
+    if(t.classList.contains('ov')) closeOv(t);
+  });
+  document.addEventListener('keydown',function(e){
+    if(!openStack.length) return;
+    var top=openStack[openStack.length-1];
+    if(e.key==='Escape'){closeOv(top);return}
+    if(e.key==='Tab'){
+      var f=top.querySelectorAll('button:not([disabled]),a[href],input,select,[tabindex]:not([tabindex="-1"])');
+      f=Array.prototype.filter.call(f,function(x){return x.offsetParent!==null});
+      if(!f.length) return;
+      var first=f[0], last=f[f.length-1];
+      if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+      else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+    }
+  });
+
+  /* ---------- калькулятор ---------- */
+  var income=$('income');
+  function setBadge(el,cls){el.className='badge '+cls}
+  function limitState(pct,year){
+    if(pct>=100) return {cls:'bad',color:'#d03a3a',t:'Лимит превышен',
+      x:'При таком доходе вы превысите 2,4 млн ₽ примерно к '+Math.ceil(LIMIT/(year/12))+'-му месяцу года. После превышения право на НПД теряется, и нужно переходить на другой режим.'};
+    if(pct>=90) return {cls:'bad',color:'#d03a3a',t:'Критически близко к лимиту',
+      x:'Запас всего '+fmt(LIMIT-year)+' ₽. Любая разовая оплата может вывести вас за лимит. Заранее решите, на какой режим перейдёте.'};
+    if(pct>=70) return {cls:'warn',color:'#e0a21b',t:'Приближаетесь к лимиту',
+      x:'Запас '+fmt(LIMIT-year)+' ₽. Следите за накопленным доходом в «Мой налог» и планируйте крупные платежи.'};
+    return {cls:'ok',color:'#0b9f6c',t:'Запас по лимиту есть',
+      x:'До лимита остаётся '+fmt(LIMIT-year)+' ₽ в год. Сейчас всё в пределах нормы.'};
+  }
+  function riskState(m,type){
+    var lvl=type==='phys'?(m<50000?0:m<120000?1:m<250000?2:3):(m<200000?0:m<350000?1:2);
+    return [
+      {cls:'ok',t:'Низкий риск',x:'Объём поступлений выглядит обычным для небольшой самозанятой деятельности.'},
+      {cls:'warn',t:'Умеренный риск',x:'Банк может запросить пояснения или документы по операциям. Держите под рукой чеки и договоры.'},
+      {cls:'bad',t:'Повышенный риск',x:'Регулярные крупные поступления от разных людей на личную карту часто привлекают внимание банка. Возможны ограничения операций.'},
+      {cls:'bad',t:'Высокий риск',x:'Большой оборот по личной карте от физлиц — типичный признак для проверки по 115-ФЗ. Лучше вести деятельность через отдельный счёт.'}
+    ][lvl];
+  }
+  function tipsFor(type,m){
+    var t=[];
+    if(type==='phys'){
+      t.push('Указывайте в переводах понятное назначение, например «оплата услуг» и дату.');
+      t.push('Выставляйте чек в «Мой налог» на каждую оплату в тот же день.');
+      if(m>=50000) t.push('Откройте отдельный счёт для самозанятых и принимайте оплату по СБП или по ссылке.');
+      if(m>=120000) t.push('Храните переписку, акты и договоры, чтобы быстро ответить на запрос банка.');
+    } else {
+      t.push('Заключайте договор и подписывайте акты: это главные документы, которые просит банк.');
+      t.push('Просите платить на расчётный счёт или карту, привязанную к вашей деятельности.');
+      t.push('Передавайте чек юрлицу до 9-го числа следующего месяца с ИНН плательщика.');
+    }
+    return t;
+  }
+  function update(){
+    var m=+income.value, type=document.querySelector('input[name=client]:checked').value;
+    var year=m*12, pct=year/LIMIT*100, shown=Math.min(pct,100);
+    $('incomeOut').textContent=fmt(m);
+    income.style.setProperty('--p',((m-MIN)/(MAX-MIN)*100)+'%');
+    $('yearOut').textContent=fmt(year)+' ₽';
+    $('pctOut').textContent=Math.round(pct)+'%';
+    var ls=limitState(pct,year), rs=riskState(m,type);
+    $('barFill').style.width=shown+'%'; $('barFill').style.background=ls.color;
+    document.querySelector('.bar').setAttribute('aria-valuenow',Math.round(shown));
+    setBadge($('limitBadge'),ls.cls); $('limitTitle').textContent=ls.t; $('limitText').textContent=ls.x;
+    setBadge($('riskBadge'),rs.cls); $('riskTitle').textContent=rs.t; $('riskText').textContent=rs.x;
+    var rate=type==='phys'?0.04:0.06;
+    $('taxLabel').textContent='Налог за год по ставке '+(rate*100)+'%';
+    $('taxOut').textContent=fmt(year*rate)+' ₽';
+    $('tips').innerHTML=tipsFor(type,m).map(function(s){return '<li>'+s+'</li>'}).join('');
+    S={m:m,year:year,pct:pct,type:type,limit:ls.t,risk:rs.t};
+    forms.forEach(function(f){f.refresh()});
+  }
+  income.addEventListener('input',update);
+  document.querySelectorAll('input[name=client]').forEach(function(r){r.addEventListener('change',update)});
+  update();
+})();
+</script>
+</body>
+</html>
